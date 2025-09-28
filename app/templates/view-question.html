@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}
+<title>{{ question.title }}</title>
+{% endblock %}
+
+{% block body %}
+<h2>Деталі питання</h2>
+
+<p><strong>Автор:</strong> {{ question.owner.username }}</p>
+<p><strong>Назва:</strong> {{ question.title }}</p>
+<p><strong>Питання:</strong> {{ question.quest }}</p>
+
+<hr>
+<h3>Коментарі</h3>
+{% if comments %}
+    <ul>
+        {% for c in comments %}
+            <li>
+                <strong>{{ c.author.username }}</strong> ({{ c.created_at|date:"d.m.Y H:i" }}):<br>
+                {{ c.text }}
+                <br>
+                {% if c.author == request.user or role == "Модератор" or role == "Адміністратор" %}
+                    <a href="{% url 'delete-comment' id=c.id %}" 
+                       style="color:red; font-weight:bold; display:inline-block; margin-top:5px;"
+                       onclick="return confirm('Ви точно хочете видалити коментар?')">
+                       Видалити
+                    </a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Ще немає коментарів.</p>
+{% endif %}
+
+<hr>
+<h3>Додати коментар</h3>
+<form method="post">
+    {% csrf_token %}
+    <textarea name="comment" rows="3" style="width:100%;" required></textarea><br>
+    <button type="submit" style="margin-top:5px;">Відправити</button>
+</form>
+
+<a href="{% url 'view-all-questions' %}">Повернутися до всіх питань</a>
+{% endblock %}

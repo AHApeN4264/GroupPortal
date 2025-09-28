@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Історія повідомлень</title>
+{% endblock %}
+
+{% block body %}
+<h2>Ваша історія повідомлень:</h2>
+<div class="messages-container" style="margin: 20px 0;">
+{% for msg in messages_list %}
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-radius: 5px; margin-bottom: 10px;
+                {% if msg.level == 'success' %}background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                {% elif msg.level == 'error' %}background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                {% else %}background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;{% endif %}">
+        <div>
+            {{ msg.text }} <br>
+            <small>{{ msg.created_at|date:"d.m.Y H:i" }}</small>
+        </div>
+        <div>
+            <a href="{% url 'delete-message' id=msg.id %}" 
+               style="color:red; font-weight:bold; text-decoration:none; margin-left: 10px;">
+               Видалити
+            </a>
+        </div>
+    </div>
+{% empty %}
+    <p>У вас ще немає повідомлень.</p>
+{% endfor %}
+
+</div>
+{% endblock %}
