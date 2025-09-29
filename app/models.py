@@ -8,6 +8,8 @@ from django.conf import settings
 
 class User(AbstractUser):
     wallet = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    surname = models.CharField(max_length=150, null=True, blank=True)
+    gmail = models.EmailField(max_length=254, null=True, blank=True)
     phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
 
     role = models.CharField(
@@ -27,6 +29,16 @@ class User(AbstractUser):
         ],
         default='Студент',
     )
+    
+class Event(models.Model):
+    id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    date = models.DateField()
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.title} ({self.date})"
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -78,6 +90,7 @@ class Forum(models.Model):
         related_name="forum_owned",
         default=1
     )
+    photo = models.ImageField(null=True, blank=True, upload_to='photos/')
     title = models.CharField(max_length=100)
     quest = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
@@ -89,13 +102,19 @@ class Forum(models.Model):
 
 
 class Comment(models.Model):
-    question = models.ForeignKey(Forum, on_delete=models.CASCADE, related_name='comments')
+    photo = models.ImageField(null=True, blank=True, upload_to='photos/')
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='comments', null=True, blank=True)
+    question = models.ForeignKey(Forum, on_delete=models.CASCADE, related_name='comments', null=True, blank=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.author.username} on {self.question.title}"
+        if self.event:
+            return f"{self.author.username} on {self.event.title}"
+        if self.question:
+            return f"{self.author.username} on {self.question.title}"
+        return f"{self.author.username}"
 
 class Вiary(models.Model):
     owner = models.ForeignKey(

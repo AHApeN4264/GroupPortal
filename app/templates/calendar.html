@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}<title>Календар</title>{% endblock %}
+
+{% block body %}
+<h2>Календар подій</h2>
+
+{% if role == "Адміністратор" or role == "Модератор" %}
+    <a href="{% url 'add-event' %}" style="margin-bottom:10px; display:inline-block;">+ Додати подію</a>
+{% endif %}
+
+<ul>
+    {% for e in events %}
+        <br>
+        <li>
+            <a href="{% url 'view-event' id=e.id %}" style="text-decoration: none; color: inherit;">
+                <strong>{{ e.title }}</strong> ({{ e.date }})
+            </a>
+            
+        {% if role == "Модератор" or role == "Адміністратор" %}
+            <a href="{% url 'delete-event' id=e.id %}" 
+               style="color:red; font-weight:bold; display:inline-block; margin-left:10px;"
+               onclick="return confirm('Ви точно хочете видалити евент {{ e.title }}?')">
+               Видалити
+            </a>
+        {% endif %}        
+
+        </li>
+    {% empty %}
+        <p>Подій ще немає.</p>
+    {% endfor %}
+</ul>
+{% endblock %}

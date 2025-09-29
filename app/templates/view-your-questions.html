@@ -19,7 +19,7 @@
                     </h3>
                     <p style="margin: 0 0 10px; color: #333;">{{ q.quest }}</p>
                 {% if q.owner == request.user or role == "Модератор" or role == "Адміністратор" %}
-                    <a href="{% url 'delete-question' id=q.id %}" 
+                    <a href="{% url 'delete-question-my' id=q.id %}" 
                        style="color:red; font-weight:bold; display:inline-block; margin-top:5px; text-decoration: none;"
                        onclick="return confirm('Ви точно хочете видалити завдання?')">
                        Видалити

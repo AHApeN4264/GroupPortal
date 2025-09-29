@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}
+<title>{{ event.title }}</title>
+{% endblock %}
+
+{% block body %}
+<h2>Деталі події</h2>
+
+<p><strong>Дата:</strong> {{ event.date }}</p>
+<p><strong>Назва:</strong> {{ event.title }}</p>
+<p><strong>Опис:</strong> {{ event.description }}</p>
+<hr>
+<a href="{% url 'calendar' %}">← Назад до календаря</a>
+{% endblock %}

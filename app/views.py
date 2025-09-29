@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import User, Вiary, Student, Teacher, Forum, Comment, UserMessage, ScheduleEntry
+from .models import User, Вiary, Student, Teacher, Forum, Comment, UserMessage, ScheduleEntry, Event
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, authenticate
@@ -28,12 +28,7 @@ def save_user_message(user, text, level="info"):
 
 @login_required
 def message_all_users(request, id=None):
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
 
     if not request.user.is_staff and request.user.username.lower() != "andrey":
         messages.error(request, "У вас немає доступу до цієї сторінки.")
@@ -81,12 +76,7 @@ def role_required(allowed_roles):
     return decorator
 
 def menu(request, id=None):
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
 
     if id == 'none' or id is None:
         user = None
@@ -101,14 +91,71 @@ def menu(request, id=None):
         'role': role
         })
 
+def calendar(request):
+    role = get_user_role(request.user)
+    events = Event.objects.all().order_by("date")
+
+    return render(request, 'Calendar.html', {
+        'role': role,
+        'events': events,
+        'today': date.today()
+    })
+
+def add_event(request):
+    role = get_user_role(request.user)
+    if role not in ["Адміністратор", "Модератор"]:
+        messages.error(request, "У вас немає прав для додавання подій.")
+        return redirect("calendar")
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        event_date = request.POST.get("date")
+        if title and event_date:
+            Event.objects.create(
+                title=title,
+                description=description,
+                date=event_date,
+                created_by=request.user
+            )
+            messages.success(request, "Подію додано!")
+            return redirect("calendar")
+    
+    return render(request, 'add-event.html', {
+        'role': role
+    })
+
+@login_required
+def view_event(request, id):
+    role = get_user_role(request.user)
+    event = get_object_or_404(Event, id=id)
+    comments = event.comments.all().order_by('-created_at')
+
+    if request.method == "POST":
+        text = request.POST.get("comment")
+        photo = request.FILES.get("photo")
+        if text:
+            Comment.objects.create(
+                event=event,
+                author=request.user,
+                text=text,
+                photo=photo
+            )
+            messages.success(request, "Коментар додано!")
+            return redirect("view-event", id=id)
+        else:
+            messages.error(request, "Коментар не може бути порожнім!")
+
+    return render(request, "view-event.html", {
+        "role": role,
+        "event": event,
+        "comments": comments
+    })
+
+
 @login_required
 def create_quest_forum(request, id=None):
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
 
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -141,12 +188,7 @@ def view_all_questions(request):
 
     questions = questions.order_by('-approved_at')
 
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
 
     return render(request, 'view-all-questions.html', {
         'questions': questions,
@@ -157,12 +199,7 @@ def view_all_questions(request):
 
 @login_required
 def view_your_questions(request):
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
 
     user_questions = Forum.objects.filter(owner=request.user)
 
@@ -174,28 +211,26 @@ def view_your_questions(request):
 
 @login_required
 def view_question(request, id):
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
 
     question = get_object_or_404(Forum, id=id)
     comments = question.comments.all().order_by('-created_at')
 
     if request.method == 'POST':
         text = request.POST.get('comment')
+        photo = request.FILES.get('photo')
         if text:
             Comment.objects.create(
                 question=question,
                 author=request.user,
-                text=text
+                text=text,
+                photo=photo
             )
             messages.success(request, "Коментар додано!")
             return redirect('view-question', id=id)
         else:
             messages.error(request, "Коментар не може бути порожнім!")
+
 
     return render(request, 'view-question.html', {
         'question': question,
@@ -284,13 +319,15 @@ def delete_message(request, id):
     return redirect('history')
 
 @login_required
+def delete_event(request, id):
+    msg = get_object_or_404(Event, id=id)
+    msg.delete()
+    messages.success(request, "Повідомлення успішно видалено")
+    return redirect('calendar')
+
+@login_required
 def history(request):
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
     
     messages_list = request.user.messages.all().order_by('-created_at')
     
@@ -301,12 +338,7 @@ def history(request):
 
 @login_required
 def role(request):
-    role = "Користувач"
-    if request.user.is_authenticated:
-        if request.user.username.lower() == "andrey":
-            role = "Адміністратор"
-        elif request.user.is_staff:
-            role = "Модератор"
+    role = get_user_role(request.user)
     
     
     return render(request, 'history.html', {
@@ -315,19 +347,24 @@ def role(request):
 
 # @get_user_role
 def grade(request):
-    
+    role = get_user_role(request.user)
     return render(request, 'grade.html', {
+        'role': role,
     })
 
 def register(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         surname = request.POST.get('surname')
+        phone_number = request.POST.get('phone_number')
         email = request.POST.get('email')
         password = request.POST.get('password')
 
         if User.objects.filter(username=username).exists():
             messages.error(request, f"Користувач з ім'ям '{username}' вже існує")
+            return redirect('register')
+        if User.objects.filter(phone_number=phone_number).exists():
+            messages.error(request, f"Користувач з номером телефону '{phone_number}' вже існує")
             return redirect('register')
         if User.objects.filter(email=email).exists():
             messages.error(request, f"Користувач з email '{email}' вже існує")
@@ -335,6 +372,8 @@ def register(request):
 
         user = User.objects.create(
             username=username,
+            surname=surname,
+            phone_number=phone_number,
             email=email,
             password=make_password(password)
         )
@@ -356,16 +395,20 @@ def login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         surname = request.POST.get('surname', '').strip()
+        phone_number = request.POST.get('phone_number', '').strip()
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '').strip()
-        if not username or not surname or not email or not password:
+        if not username or not surname or not phone_number or not email or not password:
             messages.error(request, "Будь ласка, заповніть все.")
             return render(request, 'login.html')
         errors = []
         user_by_username = User.objects.filter(username=username).first()
         if not user_by_username:
             errors.append("Ім'я користувача не знайдено.")
-        user_by_phone = User.objects.filter(phone_number=surname).first()
+        user_by_surname = User.objects.filter(surname=surname).first()
+        if not user_by_surname:
+            errors.append("Прізвище користувача не знайдено.")
+        user_by_phone = User.objects.filter(phone_number=phone_number).first()
         if not user_by_phone:
             errors.append("Номер телефону не знайдено.")
         user_by_email = User.objects.filter(email=email).first()
@@ -376,7 +419,7 @@ def login(request):
                 messages.error(request, err)
             return render(request, 'login.html')
         try:
-            user = User.objects.get(username=username, phone_number=surname, email=email)
+            user = User.objects.get(username=username, surname=surname, phone_number=phone_number, email=email)
         except User.DoesNotExist:
             messages.error(request, "Користувача з такими комбінаціями даних не знайдено.")
             return render(request, 'login.html')
@@ -384,7 +427,8 @@ def login(request):
             messages.error(request, "Невірний пароль.")
             return render(request, 'login.html')
         auth_login(request, user)
-        return redirect(reverse('home', args=[user.username]))
+        messages.success(request, "Ви увійшли в акаунт!")
+        return redirect('home', id=request.user.id)
     return render(request, 'login.html')
 
 
