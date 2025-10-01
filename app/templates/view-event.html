@@ -4,11 +4,29 @@
 {% endblock %}
 
 {% block body %}
-<h2>Деталі події</h2>
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
+    <div style="max-width: 600px; width: 100%; padding: 20px; border: 1px solid #ddd; border-radius: 12px; 
+                background: #f9f9f9; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center;">
+        
+        <h2 style="margin-bottom: 20px; color:#2c3e50;">Деталі події</h2>
 
-<p><strong>Дата:</strong> {{ event.date }}</p>
-<p><strong>Назва:</strong> {{ event.title }}</p>
-<p><strong>Опис:</strong> {{ event.description }}</p>
-<hr>
-<a href="{% url 'calendar' %}">← Назад до календаря</a>
+        <p style="margin: 10px 0; font-size: 16px; color:#444;">
+            <strong>Дата:</strong> {{ event.date }}
+        </p>
+        <p style="margin: 10px 0; font-size: 16px; color:#444;">
+            <strong>Назва:</strong> {{ event.title }}
+        </p>
+        <p style="margin: 10px 0; font-size: 16px; color:#444;">
+            <strong>Опис:</strong> {{ event.description }}
+        </p>
+
+        <hr style="margin: 20px 0;">
+
+        <a href="{% url 'calendar' %}" 
+           style="display:inline-block; padding: 10px 15px; border-radius: 8px; 
+                  background:#3498db; color:#fff; text-decoration: none; font-weight: bold;">
+            ← Назад до календаря
+        </a>
+    </div>
+</div>
 {% endblock %}
