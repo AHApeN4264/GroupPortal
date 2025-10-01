@@ -18,6 +18,14 @@
             <li>
                 <strong>{{ c.author.username }}</strong> ({{ c.created_at|date:"d.m.Y H:i" }}):<br>
                 {{ c.text }}
+            
+                {% if c.photo %}
+                    <div style="margin-top:5px;">
+                        <img src="{{ c.photo.url }}" alt="фото коментаря" 
+                             style="max-width:200px; border:1px solid #ccc; border-radius:5px;">
+                    </div>
+                {% endif %}
+                
                 <br>
                 {% if c.author == request.user or role == "Модератор" or role == "Адміністратор" %}
                     <a href="{% url 'delete-comment' id=c.id %}" 
@@ -35,9 +43,13 @@
 
 <hr>
 <h3>Додати коментар</h3>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <textarea name="comment" rows="3" style="width:100%;" required></textarea><br>
+    <label>
+      <input type="file" id="avatarInput" name="photo" accept="image/*">
+    </label>
+    <br>
     <button type="submit" style="margin-top:5px;">Відправити</button>
 </form>
 

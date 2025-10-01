@@ -133,6 +133,11 @@
       </div>    
 
       <div class="input-group">
+        <input type="text" name="surname" placeholder="Прізвище" required>
+        <i class="fa-solid fa-user"></i>
+      </div>   
+
+      <div class="input-group">
         <input type="text" name="phone_number" placeholder="Номер телефону" required>
         <i class="fa-solid fa-phone"></i>
       </div>    
@@ -152,6 +157,8 @@
 
     <div class="extra-links">
       <p>Вже є акаунт? <a href="{% url 'login' %}">Увійти</a></p>
+      <br>
+      <p>Видалити акаунт? <a href="{% url 'register-delete' %}">Видалення</a></p>
     </div>
   </div>
 </body>

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}<title>Додати подію</title>{% endblock %}
+
+{% block body %}
+<h2>Додати подію</h2>
+<form method="POST" action="">
+    {% csrf_token %}
+
+    <div style="display: flex; flex-direction: column; margin-bottom: 15px; max-width: 400px;">
+        <label for="title" style="margin-bottom: 5px;">Назва події:</label>
+        <input type="text" id="title" name="title" maxlength="200" required style="padding: 8px; font-size: 14px;">
+    </div>
+
+    <div style="display: flex; flex-direction: column; margin-bottom: 15px; max-width: 400px;">
+        <label for="description" style="margin-bottom: 5px;">Опис:</label>
+        <textarea id="description" name="description" rows="4" style="padding: 8px; font-size: 14px; resize: vertical;"></textarea>
+    </div>
+
+    <div style="display: flex; flex-direction: column; margin-bottom: 15px; max-width: 400px;">
+        <label for="date" style="margin-bottom: 5px;">Дата:</label>
+        <input type="date" id="date" name="date" required style="padding: 8px; font-size: 14px;">
+    </div>
+
+    <button type="submit" style="padding: 10px 20px; font-size: 14px;">Створити</button>
+</form>
+{% endblock %}
