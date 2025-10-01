@@ -75,21 +75,21 @@ def role_required(allowed_roles):
         return _wrapped_view
     return decorator
 
-def menu(request, id=None):
+def home(request, id=None):
     role = get_user_role(request.user)
 
-    if id == 'none' or id is None:
+    if not id or id == 'none':
         user = None
     else:
         try:
             user = User.objects.get(id=id)
         except User.DoesNotExist:
-            return redirect('menu_none')
-        
-    return render(request, 'menu.html', {
+            return redirect('home', id='none')
+
+    return render(request, 'home.html', {
         'user': user,
         'role': role
-        })
+    })
 
 def calendar(request):
     role = get_user_role(request.user)
@@ -345,7 +345,6 @@ def role(request):
         'role': role,
     })
 
-# @get_user_role
 def grade(request):
     role = get_user_role(request.user)
     return render(request, 'grade.html', {

@@ -19,13 +19,13 @@
               overflow-x: hidden;
           }
 
-      
           nav {
             background: linear-gradient(135deg, #667eea, #764ba2);
             padding: 0 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
           }
-      
+
           nav ul {
             list-style: none;
             display: flex;
@@ -33,11 +33,11 @@
             margin: 0;
             padding: 0;
           }
-      
+
           nav li {
             position: relative;
           }
-      
+
           nav a {
             display: block;
             padding: 15px 20px;
@@ -46,12 +46,12 @@
             font-weight: 500;
             transition: background 0.3s, color 0.3s;
           }
-      
+
           nav a:hover {
             background: rgba(255,255,255,0.2);
             color: #fff;
           }
-      
+
           nav li ul {
             position: absolute;
             top: 100%;
@@ -64,35 +64,35 @@
             overflow: hidden;
             z-index: 1000;
           }
-      
+
           nav li:hover ul {
             display: flex;
           }
-      
+
           nav li ul li a {
             padding: 10px 15px;
             font-size: 14px;
           }
-      
+
           nav li ul li a:hover {
             background: rgba(255,255,255,0.3);
           }
-      
+
           @media (max-width: 768px) {
             nav ul {
               flex-direction: column;
             }
-        
+
             nav li ul {
               position: static;
               display: none;
             }
-        
+
             nav li:hover ul {
               display: flex;
             }
           }
-          
+
           .message {
             color: green;
             font-weight: bold;
@@ -102,11 +102,12 @@
             color: red;
             font-weight: bold;
           }
+          
     </style>
 </head>
 <body>
-    <nav class="p-2">
-        <ul>
+    <nav class="p-2 d-flex justify-content-between align-items-center">
+        <ul class="d-flex m-0 p-0">
             <li><a href="{% url 'home' id=request.user.id %}">Головна</a></li>
             <li>
                 <a href="">Про школу</a>
@@ -137,21 +138,39 @@
                     <li><a href="{% url 'view-all-questions' %}">Переглянути всі питання</a></li>
                     <li><a href="{% url 'view-your-questions' %}">Переглянути свої питання</a></li>
                     {% if role == "Модератор" or role == "Адміністратор" %}
-                      <li><a href="{% url 'view-request-users' %}">Запроси на створення питання(модератор)</a></li>
+                      <li><a href="{% url 'view-request-users' %}">Запроси на створення питання (модератор)</a></li>
                     {% endif %}
                 </ul>
             </li>
-              <li>
-              <a href="">Інше</a>
-              <ul>
-                <li><a href="">Контакти</a></li>
-                <li><a href="{% url 'history' %}">Історія повідомлень</a></li>
-                {% if role == "Модератор" or role == "Адміністратор" %}
-                  <li><a href="{% url 'message-all-users' %}">Написати новину (модератор)</a></li>
-                {% endif %}
-              </ul>
+            <li>
+                <a href="">Інше</a>
+                <ul>
+                    <li><a href="">Контакти</a></li>
+                    <li><a href="{% url 'history' %}">Історія повідомлень та Оголошення</a></li>
+                    {% if role == "Модератор" or role == "Адміністратор" %}
+                      <li><a href="{% url 'message-all-users' %}">Написати новину (модератор)</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+        </ul>   
+
+        <ul class="m-0 p-0">
+            {% if user.is_authenticated %}
+                <li>
+                    <a href="#"
+                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                       Вийти з акаунту
+                    </a>
+                </li>
+                <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
+                    {% csrf_token %}
+                </form>
+            {% else %}
+                <li><a href="{% url 'login' %}">Увійти</a></li>
+            {% endif %}
         </ul>
     </nav>
+
 
     {% block body %}{% endblock %}
 

@@ -8,19 +8,18 @@ from django.contrib.auth.views import LogoutView
 
 def catch_all_redirect(request, path=None):
     if request.user.is_authenticated:
-        return redirect('home', id=str(request.user.id))
-    else:
-        return redirect('home', id='none')
+        return redirect('home', id=request.user.id)
+    return redirect('home', id='none')
 
 urlpatterns = [
     path('', lambda request: redirect('menu', id=request.user.id if request.user.is_authenticated else 'none')),
     path('register', views.register, name='register'),
     path('register-delete', views.register_delete, name='register-delete'),
     path('login', views.login, name='login'),
-    path('login/student', views.login_student, name='login-student'),
-    path('login/teacher', views.login_teacher, name='login-teacher'),
+    # path('login/student', views.login_student, name='login-student'),
+    # path('login/teacher', views.login_teacher, name='login-teacher'),
     path('logout/', LogoutView.as_view(next_page='/login'), name='logout'),
-    path('home/<int:id>/', views.menu, name='home'),
+    path('home/<str:id>/', views.home, name='home'),
     path('calendar', views.calendar, name='calendar'),
     path('add-event', views.add_event, name='add-event'),
     path('view-event/<int:id>', views.view_event, name='view-event'),
