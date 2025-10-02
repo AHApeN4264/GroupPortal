@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+<title>Шкільний сайт — Оцінки</title>
+<style>
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #f1f5ff; 
+  }
+
+  .message { 
+    color: green; 
+  }
+
+  .error-msg { 
+    color: red; 
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      {% if messages %}
+        {% for message in messages %}
+          <p class="{% if message.tags == 'success' %}message{% else %}error-msg{% endif %}">
+            {{ message }}
+          </p>
+        {% endfor %}
+      {% endif %}
+
+      <div class="table-responsive mb-3">
+        <table class="table table-hover mb-0">
+          <thead class="table-secondary">
+            <tr>
+              <th style="width:60px;">#</th>
+              <th>Учень</th>
+              <th>Клас</th>
+              <th>Предмет</th>
+              <th style="width:120px;">Оцінка</th>
+              <th style="width:160px;">Дата</th>
+              <th style="width:220px;">Дія</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for g in grades %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ g.student_name }}</td>
+              <td>{{ g.student_class|default:"—" }}</td>
+              <td>{{ g.subject|default:"—" }}</td>
+              <td class="fw-bold">{{ g.grade }}</td>
+              <td>{{ g.created_at|date:"Y-m-d H:i" }}</td>
+              <td>
+                <a href="{% url 'grade_edit' g.pk %}" class="btn btn-sm btn-outline-warning me-1">✏️ Редагувати</a>
+              
+                {% if role == "Модератор" or role == "Адміністратор" %}
+                <form method="post" action="{% url 'grade_delete' g.pk %}" style="display:inline-block"
+                      onsubmit="return confirm('Ви дійсно хочете видалити цього учня?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">🗑 Видалити</button>
+                </form>
+                {% endif %}
+              
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">Учнів ще немає.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        </table>
+      </div>
+
+      {% if role == "Модератор" or role == "Адміністратор" %}
+      <div class="text-end mt-4">
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" name="add_student" class="btn btn-primary">
+            + Додати учня
+          </button>
+        </form>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</main>
+{% endblock %}

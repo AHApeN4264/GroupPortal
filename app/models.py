@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from django.conf import settings
+from django import forms
 
 # python manage.py makemigrations
 # python manage.py migrate
@@ -40,48 +41,6 @@ class Event(models.Model):
     def __str__(self):
         return f"{self.title} ({self.date})"
 
-class Student(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    surname = models.CharField(max_length=150, null=True, blank=True)
-    gmail = models.EmailField(max_length=254, null=True, blank=True)
-    password = models.CharField(max_length=128, null=True, blank=True)
-
-    grade = models.CharField(max_length=3, null=True, blank=True)
-    subjects = models.CharField(max_length=50, null=True, blank=True)
-
-    def __str__(self):
-        return f"Студент: {self.user.username}"
-
-class Teacher(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    surname = models.CharField(max_length=150, null=True, blank=True)
-    gmail = models.EmailField(max_length=254, null=True, blank=True)
-    password = models.CharField(max_length=128, null=True, blank=True)
-    
-    subject = models.CharField(max_length=50, null=True, blank=True)
-
-    def __str__(self):
-        return f"Вчитель: {self.user.username}"
-    
-class ScheduleEntry(models.Model):
-    DAY_CHOICES = [
-        ('Понеділок', 'Понеділок'),
-        ('Вівторок', 'Вівторок'),
-        ('Середа', 'Середа'),
-        ('Четвер', 'Четвер'),
-        ("П'ятниця", "П'ятниця"),
-    ]
-
-    day = models.CharField(max_length=20, choices=DAY_CHOICES)
-    time = models.CharField(max_length=20)
-    subject = models.CharField(max_length=100, blank=True)
-    teacher = models.CharField(max_length=100, blank=True)
-    room = models.CharField(max_length=50, blank=True)
-
-    def __str__(self):
-        return f"{self.day} {self.time} - {self.subject}"
-
-
 class Forum(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(
@@ -115,6 +74,61 @@ class Comment(models.Model):
         if self.question:
             return f"{self.author.username} on {self.question.title}"
         return f"{self.author.username}"
+    
+class Grade(models.Model):
+    student_name = models.CharField(max_length=150)
+    student_class = models.CharField(max_length=50, blank=True, null=True)
+    grade = models.IntegerField()
+    created_at = models.DateTimeField(default=timezone.now)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    subject_text = models.CharField(
+        max_length=50,
+        default='Немає уроку'
+    )
+    subject = models.CharField(
+        max_length=50,
+        choices=[
+            ('Українська мова', 'Українська мова'),
+            ('Українська література', 'Українська література'),
+            ('Математика', 'Математика'),
+            ('Біологія', 'Біологія'),
+            ('Мистецтво', 'Мистецтво'),
+            ('Історія України', 'Історія України'),
+            ('Всесвітся історія', 'Всесвітся історія'),
+            ('Основи правознавства', 'Основи правознавства'),
+            ('Алгебра', 'Алгебра'),
+            ('Геометрія', 'Геометрія'),
+            ('Фізична культура', 'Фізична культура'),
+            ('Інформатіка', 'Інформатіка'),
+            ('Англійська мова', 'Англійська мова'),
+            ('Виховна година', 'Виховна година'),
+            ('Хімія', 'Хімія'),
+            ('Біологія', 'Біологія'),
+            ('Зарубіжна література', 'Зарубіжна література'),
+            ('Фізика', 'Фізика'),
+            ('Географія', 'Географія'),
+            ('Основи здоровья', 'Основи здоровья'),
+            ('Трудове навчання', 'Трудове навчання'),
+            ('Інше', 'Інше'),
+
+        ],
+        default='Українська мова',
+    )
+
+    def __str__(self):
+        return f"{self.student_name} ({self.student_class}) – {self.subject}: {self.grade}"
+
+class GradeForm(forms.ModelForm):
+    class Meta:
+        model = Grade
+        fields = ['student_name', 'student_class', 'subject', 'grade', 'created_at']
+        widgets = {
+            'student_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_class': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject': forms.TextInput(attrs={'class': 'form-control'}),
+            'grade': forms.NumberInput(attrs={'class': 'form-control'}),
+            'created_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+        }
 
 class Вiary(models.Model):
     owner = models.ForeignKey(

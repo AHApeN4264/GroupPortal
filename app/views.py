@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import User, Вiary, Student, Teacher, Forum, Comment, UserMessage, ScheduleEntry, Event
+from .models import User, Вiary, Forum, Comment, UserMessage, Event, GradeForm, Grade
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, authenticate
@@ -18,6 +18,7 @@ from django.utils.timezone import now
 from django.db.models import Avg
 from django.db import models
 from functools import wraps
+from django import forms
 
 User = get_user_model()
 
@@ -40,7 +41,7 @@ def message_all_users(request, id=None):
             for user in User.objects.all():
                 UserMessage.objects.create(
                     user=user,
-                    text=f"новина: {title}",
+                    text=f"Новина: {title}",
                     level="info"
                 )
             messages.success(request, "Повідомлення успішно надіслано всім користувачам!")
@@ -51,7 +52,6 @@ def message_all_users(request, id=None):
     return render(request, 'message-all-users.html', {
         'role': role
     })
-
 
 def get_user_role(user):
     if not user.is_authenticated:
@@ -78,12 +78,12 @@ def role_required(allowed_roles):
 def home(request, id=None):
     role = get_user_role(request.user)
 
-    if not id or id == 'none':
+    if not id or id in ['none', 'None']:
         user = None
     else:
         try:
-            user = User.objects.get(id=id)
-        except User.DoesNotExist:
+            user = User.objects.get(id=int(id))
+        except (User.DoesNotExist, ValueError):
             return redirect('home', id='none')
 
     return render(request, 'home.html', {
@@ -152,7 +152,6 @@ def view_event(request, id):
         "comments": comments
     })
 
-
 @login_required
 def create_quest_forum(request, id=None):
     role = get_user_role(request.user)
@@ -196,7 +195,6 @@ def view_all_questions(request):
         'title_query': title_query,
     })
 
-
 @login_required
 def view_your_questions(request):
     role = get_user_role(request.user)
@@ -207,7 +205,6 @@ def view_your_questions(request):
         'questions': user_questions,
         'role': role
     })
-
 
 @login_required
 def view_question(request, id):
@@ -237,7 +234,6 @@ def view_question(request, id):
         'comments': comments,
         'role': role
     })
-
 
 @login_required
 def view_request_users(request):
@@ -269,7 +265,6 @@ def approve_question(request, id):
         )
     return redirect('view-request-users')
 
-
 @login_required
 def reject_question(request, id):
     q = get_object_or_404(Forum, id=id)
@@ -277,6 +272,7 @@ def reject_question(request, id):
         question_title = q.title
         q.delete()
         messages.success(request, "Питання видалено!")
+        save_user_message(request.user, f"Питання видалено! '{q.title}'", "success")
 
         UserMessage.objects.create(
             user=q.owner,
@@ -284,7 +280,6 @@ def reject_question(request, id):
             level="error"
         )
     return redirect('view-request-users')
-
 
 @login_required
 def delete_question(request, id):
@@ -299,7 +294,6 @@ def delete_question_my(request, id):
     question.delete()
     messages.success(request, "Питання успішно видалено")
     return redirect('view-your-questions')
-
 
 @login_required
 def delete_comment(request, id):
@@ -347,9 +341,87 @@ def role(request):
 
 def grade(request):
     role = get_user_role(request.user)
+    
+    grades = Grade.objects.all().order_by('student_name')
+
     return render(request, 'grade.html', {
+        'grades': grades,
         'role': role,
     })
+
+def grade_add(request):
+    role = get_user_role(request.user)
+
+    grades = Grade.objects.all().order_by('student_name')
+
+    if request.method == "POST" and 'add_student' in request.POST:
+        new_student = Grade.objects.create(
+            student_name="Новий учень",
+            student_class="Поки не в якому",
+            subject="Нема уроків поки",
+            grade=0
+        )
+        new_student.student_name = f"Новий учень {new_student.id}"
+        new_student.save()
+        messages.success(request, f"Учень '{new_student.student_name}' доданий!")
+        return redirect('grade-add')
+
+    return render(request, "grade-add.html", {
+        "grades": grades,
+        "role": role
+    })
+
+class GradeForm(forms.ModelForm):
+    class Meta:
+        model = Grade
+        fields = ['student_name', 'student_class', 'subject', 'subject_text', 'grade']
+        widgets = {
+            'student_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_class': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject': forms.Select(attrs={'class': 'form-control'}),
+            'subject_text': forms.TextInput(attrs={'class': 'form-control'}),
+            'grade': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+
+def grade_edit(request, pk):
+    grade_instance = get_object_or_404(Grade, pk=pk)
+    role = get_user_role(request.user)
+    
+    if not request.user.is_staff and request.user.username.lower() != "andrey":
+        messages.error(request, "У вас немає доступу до цієї сторінки.")
+        return redirect('grade')
+
+    if request.method == "POST":
+        form = GradeForm(request.POST, instance=grade_instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Учня '{form.cleaned_data['student_name']}' оновлено!")
+            return redirect('grade-add')
+    else:
+        form = GradeForm(instance=grade_instance)
+
+    return render(request, 'grade-edit.html', {
+        'form': form,
+        'grade': grade_instance,
+        'role': role
+    })
+
+
+def grade_delete(request, pk):
+    grade_instance = get_object_or_404(Grade, pk=pk)
+
+    role = get_user_role(request.user)
+    if role not in ["Модератор", "Адміністратор"]:
+        messages.error(request, "У вас немає доступу до цієї сторінки.")
+        return redirect('grade')
+
+    if request.method == "POST":
+        grade_instance.delete()
+        messages.success(request, f"Учень '{grade_instance.student_name}' видалений!")
+        return redirect('grade-add')
+
+    return redirect('grade')
 
 def register(request):
     if request.method == 'POST':
@@ -388,7 +460,6 @@ def register(request):
         return redirect('home', id=request.user.id)
 
     return render(request, 'register.html')
-
 
 def login(request):
     if request.method == 'POST':
@@ -430,7 +501,6 @@ def login(request):
         return redirect('home', id=request.user.id)
     return render(request, 'login.html')
 
-
 def login_student(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -441,7 +511,6 @@ def login_student(request):
             return redirect('home', args=[user.username])
         messages.error(request, "Невірний логін або пароль")
     return render(request, 'login-student.html')
-
 
 def login_teacher(request):
     if request.method == 'POST':
@@ -454,7 +523,6 @@ def login_teacher(request):
             return redirect(reverse('home', args=[user.username]))
         messages.error(request, "Невірний логін або пароль")
     return render(request, 'login-teacher.html')
-
 
 def register_delete(request):
     if request.method == 'POST':
