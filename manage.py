@@ -1,10 +1,9 @@
 # python manage.py runserver
 
 # git add .
-# git commit -m "Добавил редактирование учеников с выбором предмета"
+# git commit -m "Added student and biary"
 # git push origin имя_ветки
-
-
+git push origin Added student and biary
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
