@@ -12,7 +12,7 @@ def catch_all_redirect(request, path=None):
     return redirect('home', id='none')
 
 urlpatterns = [
-    path('', lambda request: redirect('menu', id=request.user.id if request.user.is_authenticated else 'none')),
+    path('', lambda request: redirect('home', id=request.user.id if request.user.is_authenticated else 'none')),
     path('register', views.register, name='register'),
     path('register-delete', views.register_delete, name='register-delete'),
     path('login', views.login, name='login'),
@@ -38,8 +38,10 @@ urlpatterns = [
     path('history', views.history, name='history'),
     path('message-all-users', views.message_all_users, name='message-all-users'),
     path('grade', views.grade, name='grade'),
+    path('grade-add', views.grade_add, name='grade-add'),
+    path("grade/<int:pk>/edit/", views.grade_edit, name="grade_edit"),
+    path("grade/<int:pk>/delete/", views.grade_delete, name="grade_delete"),
     path('role', views.role, name='role'),
-    # path('schedule', views.schedule_view, name='schedule'),
 ]
 
 if settings.DEBUG:

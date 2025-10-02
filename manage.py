@@ -1,5 +1,8 @@
 # python manage.py runserver
 
+# git add .
+
+
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os

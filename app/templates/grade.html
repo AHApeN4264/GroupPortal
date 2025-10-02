@@ -2,90 +2,22 @@
 {% load static %}
 
 {% block title %}
-<title>Шкільний сайт</title>
+<title>Шкільний сайт — Оцінки</title>
 <style>
-  body {
-    font-family: "Segoe UI", Roboto, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f9;
-  }
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f9;
+}
 
-  /* Меню */
-  nav {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    padding: 0 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  }
+.table-hover tbody tr:hover { 
+  background-color: #f1f5ff; 
+}
 
-  nav ul {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0;
-    padding: 0;
-  }
-
-  nav li {
-    position: relative;
-  }
-
-  nav a {
-    display: block;
-    padding: 15px 20px;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background 0.3s, color 0.3s;
-  }
-
-  nav a:hover {
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-  }
-
-  /* Підменю */
-  nav li ul {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    min-width: 200px;
-    background: #764ba2;
-    display: none;
-    flex-direction: column;
-    border-radius: 0 0 10px 10px;
-    overflow: hidden;
-    z-index: 1000;
-  }
-
-  nav li:hover ul {
-    display: flex;
-  }
-
-  nav li ul li a {
-    padding: 10px 15px;
-    font-size: 14px;
-  }
-
-  nav li ul li a:hover {
-    background: rgba(255,255,255,0.3);
-  }
-
-  /* Адаптивність */
-  @media (max-width: 768px) {
-    nav ul {
-      flex-direction: column;
-    }
-
-    nav li ul {
-      position: static;
-      display: none;
-    }
-
-    nav li:hover ul {
-      display: flex;
-    }
-  }
+table thead tr {
+  border-bottom: 2px solid #dee2e6;
+}
 </style>
 {% endblock %}
 
@@ -97,4 +29,52 @@
     </p>
   {% endfor %}
 {% endif %}
+
+<main>
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-secondary">
+            <tr>
+              <th style="width:60px;">#</th>
+              <th>Учень</th>
+              <th>Клас</th>
+              <th>Предмет</th>
+              <th style="width:120px;">Оцінка</th>
+              <th style="width:160px;">Дата</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for g in grades %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ g.student_name }}</td>
+              <td>{{ g.student_class|default:"—" }}</td>
+              <td>{{ g.subject|default:"—" }}</td>
+              <td class="fw-bold">{{ g.grade }}</td>
+              <td>{{ g.created_at|date:"Y-m-d H:i" }}</td>
+              <td></td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">Учнів ще немає.</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if role == "Модератор" or role == "Адміністратор" %}
+        <div class="mb-3 text-end">
+          <a href="{% url 'grade-add' %}" class="btn btn-success">
+            Редагувати учнів
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</main>
 {% endblock %}
