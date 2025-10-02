@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Ваші проекти</title>
+{% endblock %}
+
+{% block body %}
+<h2>Моє портфоліо:</h2>
+
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    {% for p in projects %}
+        <a href="{% url 'portfolio:detail_project' p.id %}" style="text-decoration: none; color: inherit;">
+            <div style="background: #f2f2f2; border: 1px solid #ccc; border-radius: 8px; padding: 15px; transition: 0.2s;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <h3 style="margin: 0; color: #000000;">{{ p.name }}</h3>
+                </div>
+                <a href="{% url 'portfolio:delete_project' p.id %}"
+                    style="color:red; font-weight:bold; display:inline-block; margin-top:5px; text-decoration: none;"
+                    onclick="return confirm('Ви точно хочете видалити цей проект?')">
+                    Видалити
+                </a>
+                <a href="{% url 'portfolio:redact_project' p.id %}"
+                    style="color:rgb(255, 157, 0); font-weight:bold; display:inline-block; margin-top:5px; text-decoration: none;">
+                    Редагувати
+                </a>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+{% endblock %}

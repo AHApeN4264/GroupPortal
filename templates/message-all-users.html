@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% endblock %}
+
+{% block body %}
+{% if messages %}
+  {% for message in messages %}
+    <p class="{% if message.tags == 'success' %}message{% else %}error-msg{% endif %}">
+      {{ message }}
+    </p>
+  {% endfor %}
+{% endif %}
+<form method="POST" action="">
+    {% csrf_token %}
+    <div style="display: flex; flex-direction: column; margin-bottom: 15px; max-width: 400px;">
+        <label for="title" style="margin-bottom: 5px;">Яка новина:</label>
+        <input type="text" id="title" name="title" maxlength="100" required style="padding: 8px; font-size: 14px;">
+    </div>
+
+    <!-- <div style="display: flex; flex-direction: column; margin-bottom: 15px; max-width: 400px;"> -->
+        <!-- <label for="quest" style="margin-bottom: 5px;">Повідомлення:</label> -->
+        <!-- <textarea id="quest" name="quest" rows="4" required style="padding: 8px; font-size: 14px; resize: vertical;"></textarea> -->
+    <!-- </div> -->
+
+    <button type="submit" style="padding: 10px 20px; font-size: 14px;">Відправити</button>
+</form>
+{% endblock %}

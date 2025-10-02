@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+<title>Редагувати учня</title>
+<style>
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background-color: #f4f4f9;
+  }
+  .message { 
+    color: green; 
+  }
+  .error-msg { 
+    color: red; 
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+  <div class="card shadow-sm mt-3">
+    <div class="card-body">
+
+      <h5>Редагувати учня: {{ grade.student_name }}</h5>
+
+      {% if messages %}
+        {% for message in messages %}
+          <p class="{% if message.tags == 'success' %}message{% else %}error-msg{% endif %}">
+            {{ message }}
+          </p>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          Ім'я учня
+          {{ form.student_name }}
+        </div>
+        <div class="mb-3">
+          Клас учня
+          {{ form.student_class }}
+        </div>
+        <div class="mb-3">
+          Предмет
+          {{ form.subject }}
+        </div>        
+
+        {% if form.subject.value == "Інше" %}
+        <div class="mb-3">
+          Інший предмет
+          {{ form.subject_text }}
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+          Оцінка
+          {{ form.grade }}
+        </div>
+        <div class="text-end">
+          <button type="submit" class="btn btn-success">Зберегти</button>
+          <a href="{% url 'grade-add' %}" class="btn btn-danger">Скасувати</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</main>
+{% endblock %}

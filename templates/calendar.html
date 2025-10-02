@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}
+<title>Календар</title>
+{% endblock %}
+
+{% block body %}
+<h2 style="text-align:center; margin-bottom: 20px;">Календар подій</h2>
+
+{% if role == "Адміністратор" or role == "Модератор" %}
+    <div style="text-align:center; margin-bottom: 20px;">
+        <a href="{% url 'add-event' %}" 
+           style="padding: 10px 15px; border-radius: 8px; background: #4CAF50; color: #fff; text-decoration: none; font-weight: bold;">
+           + Додати подію
+        </a>
+    </div>
+{% endif %}
+
+<div style="display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 0 auto;">
+    {% for e in events %}
+        <div style="padding: 15px; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; 
+                    box-shadow: 0 3px 8px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center;">
+
+            <a href="{% url 'view-event' id=e.id %}" style="text-decoration: none; color: #2c3e50; flex-grow:1;">
+                <h3 style="margin: 0 0 5px 0; color:#333;">{{ e.title }}</h3>
+                <p style="margin: 0; color: #555;">📅 {{ e.date }}</p>
+            </a>
+
+            {% if role == "Модератор" or role == "Адміністратор" %}
+                <a href="{% url 'delete-event' id=e.id %}" 
+                   style="margin-left:15px; color:white; background:#e74c3c; padding: 6px 12px; border-radius: 6px; 
+                          text-decoration: none; font-weight: bold; white-space:nowrap;"
+                   onclick="return confirm('Ви точно хочете видалити евент {{ e.title }}?')">
+                   Видалити
+                </a>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p style="text-align:center; color:#777;">Подій ще немає.</p>
+    {% endfor %}
+</div>
+{% endblock %}

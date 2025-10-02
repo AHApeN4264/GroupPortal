@@ -1,0 +1,162 @@
+{% extends 'base1.html' %}
+{% load static %}
+
+{% block title %}
+  <title>Реєстрація нового користувача</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: url("https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1500&q=80") no-repeat center center/cover;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .login-box {
+      position: relative;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 40px 35px;
+      width: 370px;
+      color: #fff;
+      z-index: 1;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .login-box h2 {
+      margin-bottom: 25px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 45px 12px 15px;
+      border: none;
+      border-radius: 12px;
+      outline: none;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .input-group i {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+      font-size: 18px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      transition: 0.3s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .extra-links {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .extra-links a {
+      color: #fff;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    .extra-links a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+<body>
+  <div class="overlay"></div>
+  <div class="login-box">
+    {% if messages %}
+      {% for message in messages %}
+        <h3><p class="{% if message.tags == 'success' %}message{% else %}error-msg{% endif %}">
+          {{ message }}
+        </p></h3>
+      {% endfor %}
+    {% endif %}
+
+    <h2>Реєстрація нового користувача</h2>
+    <form method="post" action="{% url 'register' %}">
+      {% csrf_token %}
+      <div class="input-group">
+        <input type="text" name="username" placeholder="Ім’я користувача" required>
+        <i class="fa-solid fa-user"></i>
+      </div>    
+
+      <div class="input-group">
+        <input type="text" name="surname" placeholder="Прізвище" required>
+        <i class="fa-solid fa-user"></i>
+      </div>   
+
+      <div class="input-group">
+        <input type="text" name="phone_number" placeholder="Номер телефону" required>
+        <i class="fa-solid fa-phone"></i>
+      </div>    
+
+      <div class="input-group">
+        <input type="email" name="email" placeholder="Електронна пошта" required>
+        <i class="fa-solid fa-envelope"></i>
+      </div>    
+
+      <div class="input-group">
+        <input type="password" name="password" placeholder="Пароль" required>
+        <i class="fa-solid fa-lock"></i>
+      </div>    
+
+      <button type="submit">Зареєструватися</button>
+    </form>
+
+    <div class="extra-links">
+      <p>Вже є акаунт? <a href="{% url 'login' %}">Увійти</a></p>
+    </div>
+  </div>
+</body>
+{% endblock %}

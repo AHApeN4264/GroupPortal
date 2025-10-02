@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+<title>Шкільний сайт — Оцінки</title>
+<style>
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f9;
+}
+
+.table-hover tbody tr:hover { 
+  background-color: #f1f5ff; 
+}
+
+table thead tr {
+  border-bottom: 2px solid #dee2e6;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+{% if messages %}
+  {% for message in messages %}
+    <p class="{% if message.tags == 'success' %}message{% else %}error-msg{% endif %}">
+      {{ message }}
+    </p>
+  {% endfor %}
+{% endif %}
+
+<main>
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-secondary">
+            <tr>
+              <th style="width:60px;">#</th>
+              <th>Учень</th>
+              <th>Клас</th>
+              <th>Предмет</th>
+              <th style="width:120px;">Оцінка</th>
+              <th style="width:160px;">Дата</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for g in grades %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ g.student_name }}</td>
+              <td>{{ g.student_class|default:"—" }}</td>
+              <td>{{ g.subject|default:"—" }}</td>
+              <td class="fw-bold">{{ g.grade }}</td>
+              <td>{{ g.created_at|date:"Y-m-d H:i" }}</td>
+              <td></td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">Учнів ще немає.</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if role == "Модератор" or role == "Адміністратор" %}
+        <div class="mb-3 text-end">
+          <a href="{% url 'grade-add' %}" class="btn btn-success">
+            Редагувати учнів
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    <title>Усі питання</title>
+{% endblock %}
+
+{% block body %}
+<h2>Усі питання</h2>
+
+<form method="get" style="margin: 10px 0;">
+    <label>Назва питання:
+      <input type="text" name="title" value="{{ title_query }}" placeholder="Пошук...">
+    </label>
+    <button type="submit">Знайти</button>
+</form>
+
+
+{% if questions %}
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        {% for q in questions %}
+            <a href="{% url 'view-question' id=q.id %}" style="text-decoration: none; color: inherit;">
+                <div style="background: #f2f2f2; border: 1px solid #ccc; border-radius: 8px; padding: 15px; transition: 0.2s;">
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h3 style="margin: 0; color: #000000;">{{ q.title }}</h3>
+                        <span style="font-size: 12px; color: #666;">
+                            {% if q.approved_at %}
+                                {{ q.approved_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                {{ q.created_at|date:"d.m.Y H:i" }}
+                            {% endif %}
+                        </span>
+                    </div>
+
+
+                    <p style="margin: 10px 0 0; color: #333;">{{ q.quest }}</p>
+
+                    <p style="margin: 5px 0 0; font-size: 12px; color: #666;">
+                        Коментарів: {{ q.comments.count }}
+                    </p>
+                
+                    {% if q.owner == request.user or role == "Модератор" or role == "Адміністратор" %}
+                        <a href="{% url 'delete-question' id=q.id %}" 
+                           style="color:red; font-weight:bold; display:inline-block; margin-top:5px; text-decoration: none;"
+                           onclick="return confirm('Ви точно хочете видалити завдання?')">
+                           Видалити
+                        </a>
+                    {% endif %}
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>Не знайдено питань</p>
+{% endif %}
+
+{% endblock %}
