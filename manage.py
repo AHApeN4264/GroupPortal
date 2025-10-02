@@ -1,6 +1,8 @@
 # python manage.py runserver
 
 # git add .
+# git commit -m "Добавил редактирование учеников с выбором предмета"
+# git push origin имя_ветки
 
 
 #!/usr/bin/env python
