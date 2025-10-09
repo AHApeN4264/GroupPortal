@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 import portfolio.models as models
 
 
 def all_projects(request): #Подивитися проекти усіх учнів
-    return render(request, "portfolio/all_projects.html", {"projects":models.Project.objects.all()})
+    paginator = Paginator(models.Project.objects.all(), 10)
+    page_num = request.GET.get("page")
+    return render(request, "portfolio/all_projects.html", {"projects":paginator.get_page(page_num)})
 
 @login_required
 def my_projects(request): #Подивитися портфоліо(проекти) даного учня
