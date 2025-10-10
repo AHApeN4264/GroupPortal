@@ -17,7 +17,7 @@
         {% for c in comments %}
             <li>
                 <strong>{{ c.author.username }}</strong> ({{ c.created_at|date:"d.m.Y H:i" }}):<br>
-                {{ c.text }}
+                {{ c.text|urlize|linebreaks }}
             
                 {% if c.photo %}
                     <div style="margin-top:5px;">

@@ -8,12 +8,8 @@
     font-family: "Segoe UI", Roboto, Arial, sans-serif;
     background-color: #f4f4f9;
   }
-  .message { 
-    color: green; 
-  }
-  .error-msg { 
-    color: red; 
-  }
+  .message { color: green; }
+  .error-msg { color: red; }
 </style>
 {% endblock %}
 
@@ -45,14 +41,12 @@
         <div class="mb-3">
           Предмет
           {{ form.subject }}
-        </div>        
-
-        {% if form.subject.value == "Інше" %}
-        <div class="mb-3">
+        </div>
+        
+        <div class="mb-3" id="other-subject-block" style="display: none;">
           Інший предмет
           {{ form.subject_text }}
         </div>
-        {% endif %}
 
         <div class="mb-3">
           Оцінка
