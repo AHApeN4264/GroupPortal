@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    <title>Усі опитування</title>
+{% endblock %}
+
+{% block body %}
+<h2>Усі опитування</h2>
+
+<form method="get" style="margin: 10px 0;">
+    <label>Назва опитування:
+      <input type="text" name="title" value="{{ title_query }}" placeholder="Пошук...">
+    </label>
+    <button type="submit">Знайти</button>
+</form>
+
+{% if poll %}
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+        <!-- Пагінация -->
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center">
+            {% if messages_list.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ messages_list.previous_page_number }}">Назад</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Назад</span></li>
+            {% endif %}
+          
+            {% for num in messages_list.paginator.page_range %}
+              {% if messages_list.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+          
+            {% if messages_list.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ messages_list.next_page_number }}">Вперед</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Вперед</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+
+        {% for p in poll %}
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f2f2f2; border: 1px solid #ccc; border-radius: 8px; padding: 15px; transition: 0.2s;">
+                <div style="flex-grow: 1;">
+                    <a href="{% url 'view-poll' id=p.id %}" style="text-decoration: none; color: inherit;">
+                        <h3 style="margin: 0; color: #000000;">{{ p.title }}</h3>
+                    </a>
+                </div>
+
+                <!-- Дата справа -->
+                <div style="color: #555; font-size: 14px; white-space: nowrap;">
+                    {{ p.created_at|date:"d.m.Y H:i" }}
+                </div>
+
+                {% if role == "Модератор" or role == "Адміністратор" %}
+                    <a href="{% url 'results-poll' id=p.id %}" style="color: green; font-weight:bold; margin-left: 10px; text-decoration: none;">
+                       Результаты
+                    </a>
+                    <a href="{% url 'edit-poll' id=p.id %}" style="color: orange; font-weight:bold; margin-left: 10px; text-decoration: none;">
+                       Редагувати
+                    </a>
+                    <a href="{% url 'delete-poll' id=p.id %}" style="color:red; font-weight:bold; margin-left: 10px; text-decoration: none;" onclick="return confirm('Ви точно хочете видалити опитування?')">
+                       Видалити
+                    </a>
+                {% endif %}
+            </div>
+        {% endfor %}
+            
+    </div>
+{% else %}
+    <p>Не знайдено опитувань</p>
+{% endif %}
+{% endblock %}

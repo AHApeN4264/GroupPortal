@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}
+<title>{{ poll.title }}</title>
+{% endblock %}
+
+{% block body %}
+<h2 style="margin-bottom: 20px;">Опитування: {{ poll.title }}</h2>
+
+<div style="max-width: 700px; display: flex; flex-direction: column; gap: 20px;">
+    {% for question in results %}
+        <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9;">
+            <strong>{{ forloop.counter }}. {{ question.question }}</strong>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                {% for option in question.options %}
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <!-- <input type="radio" disabled  -->
+                        <!-- {% if option.is_correct %} -->
+                            <!-- checked -->
+                        <!-- {% endif %}> -->
+                        <label style="flex:1;">{{ option.text }}</label>
+                        <span style="color: #555;">Голосів: {{ option.votes }}</span>
+                    </div>
+                    <div style="background:#e0e0e0; border-radius:4px; overflow:hidden; height:18px; margin-left:24px;">
+                        <div style="width: {{ option.percent }}%; background:#76c7c0; height:100%;"></div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<a href="{% url 'view-all-poll' %}" style="display:inline-block; margin-top:20px; text-decoration:none; color:#007bff;">Повернутися до всіх опитувань</a>
+{% endblock %}
