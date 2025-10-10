@@ -3,10 +3,9 @@
 # Для запуска с телефона
 # python manage.py runserver 0.0.0.0:8000
 
+# git checkout -b Система-голосувань
 # git add .
-# git commit -m "Added student and biary"
-# git push origin имя_ветки
-# git push origin Added student and biary
+# git push origin Система-голосувань
 
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
