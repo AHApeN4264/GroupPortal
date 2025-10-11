@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}
+<title>{{ poll.title }}</title>
+{% endblock %}
+
+{% block body %}
+<style>
+    .poll-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .poll-container h2 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+    .poll-container p {
+        margin: 15px 0;
+    }
+    .poll-container form {
+        text-align: left;
+        margin-top: 20px;
+    }
+    .poll-container label {
+        display: block;
+        margin: 10px 0;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .poll-container label:hover {
+        background: #e8f4ff;
+    }
+    .poll-container button {
+        padding: 10px 30px;
+        font-size: 16px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 15px;
+    }
+    .poll-container button:hover {
+        background: #0056b3;
+    }
+    .poll-container a {
+        display: inline-block;
+        margin-top: 15px;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .poll-container a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="poll-container">
+    <h2>Опитування: {{ poll.title }}</h2>
+
+    {% if no_questions %}
+    <p>У цьому опитуванні ще немає питань.</p>
+
+    {% else %}
+    <p><strong>Питання {{ current_index }} з {{ total_questions }}</strong></p>
+    <form method="post">
+        {% csrf_token %}
+
+        {% for option in question.options.all %}
+            <label>
+                <input type="radio" name="option" value="{{ option.id }}" required>
+                {{ option.text }}
+            </label>
+        {% endfor %}
+
+        <div style="text-align:center;">
+            <button type="submit">Відповісти</button>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

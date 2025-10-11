@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Редагування проекту</title>
+{% endblock %}
+
+{% block body %}
+<h2>Редагування вашого проекту</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>Назва проекта: <input type="text" name="name" value="{{ project.name }}" maxlength="32" required></p>
+    <p>Опис проекта:</p>
+    <textarea style="resize: both; width: 500px; height: 300px;" name="description" required>
+        {{ project.description }}
+    </textarea>
+    <p>Якщо потрібно завантажити новий файл/архів, то виберіть його: <input type="file" name="main_file"></p>
+    <input type="submit" value="Зберегти проект">
+</form>
+{% endblock %}

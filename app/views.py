@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import User, Вiary, Forum, Comment, UserMessage, Event, GradeForm, Grade
+from .models import User, Вiary, Forum, Poll, Comment, UserMessage, Event, GradeForm, Grade, Question, Option, Project, DopFile
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, authenticate
@@ -19,15 +19,29 @@ from django.db.models import Avg
 from django.db import models
 from functools import wraps
 from django import forms
-
+from django.core.paginator import Paginator
 User = get_user_model()
 
+from django.shortcuts import redirect
+from django.contrib import messages
+from functools import wraps
+
+def login_required_message(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.warning(request, "Ця дія доступна лише зареєстрованим користувачам. Будь ласка, зареєструйтесь або увійдіть.")
+            
+            user_id = kwargs.get('id', '1')
+            return redirect('home', id=user_id)
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 def save_user_message(user, text, level="info"):
     if user.is_authenticated:
         UserMessage.objects.create(user=user, text=text, level=level)
 
-@login_required
+@login_required_message
 def message_all_users(request, id=None):
     role = get_user_role(request.user)
 
@@ -101,6 +115,7 @@ def calendar(request):
         'today': date.today()
     })
 
+@login_required_message
 def add_event(request):
     role = get_user_role(request.user)
     if role not in ["Адміністратор", "Модератор"]:
@@ -125,7 +140,7 @@ def add_event(request):
         'role': role
     })
 
-@login_required
+@login_required_message
 def view_event(request, id):
     role = get_user_role(request.user)
     event = get_object_or_404(Event, id=id)
@@ -152,7 +167,7 @@ def view_event(request, id):
         "comments": comments
     })
 
-@login_required
+@login_required_message
 def create_quest_forum(request, id=None):
     role = get_user_role(request.user)
 
@@ -187,15 +202,20 @@ def view_all_questions(request):
 
     questions = questions.order_by('-approved_at')
 
+    paginator = Paginator(questions, 10)
+    page_number = request.GET.get('page')
+    messages_list = paginator.get_page(page_number)
+
     role = get_user_role(request.user)
 
     return render(request, 'view-all-questions.html', {
-        'questions': questions,
+        'questions': messages_list, 
         'role': role,
         'title_query': title_query,
+        'messages_list': messages_list,
     })
 
-@login_required
+@login_required_message
 def view_your_questions(request):
     role = get_user_role(request.user)
 
@@ -206,7 +226,6 @@ def view_your_questions(request):
         'role': role
     })
 
-@login_required
 def view_question(request, id):
     role = get_user_role(request.user)
 
@@ -235,7 +254,7 @@ def view_question(request, id):
         'role': role
     })
 
-@login_required
+@login_required_message
 def view_request_users(request):
     if not request.user.is_staff and request.user.username.lower() != "andrey":
         messages.error(request, "У вас немає доступу до цієї сторінки.")
@@ -248,7 +267,7 @@ def view_request_users(request):
         'role': "Модератор" if request.user.is_staff else "Адміністратор"
     })
 
-@login_required
+@login_required_message
 def approve_question(request, id):
     q = get_object_or_404(Forum, id=id)
     if request.user.is_staff or request.user.username.lower() == "andrey":
@@ -265,7 +284,7 @@ def approve_question(request, id):
         )
     return redirect('view-request-users')
 
-@login_required
+@login_required_message
 def reject_question(request, id):
     q = get_object_or_404(Forum, id=id)
     if request.user.is_staff or request.user.username.lower() == "andrey":
@@ -281,21 +300,21 @@ def reject_question(request, id):
         )
     return redirect('view-request-users')
 
-@login_required
+@login_required_message
 def delete_question(request, id):
     question = get_object_or_404(Forum, id=id, owner=request.user)
     question.delete()
     messages.success(request, "Питання успішно видалено")
     return redirect('view-all-questions')
 
-@login_required
+@login_required_message
 def delete_question_my(request, id):
     question = get_object_or_404(Forum, id=id, owner=request.user)
     question.delete()
     messages.success(request, "Питання успішно видалено")
     return redirect('view-your-questions')
 
-@login_required
+@login_required_message
 def delete_comment(request, id):
     comment = get_object_or_404(Comment, id=id)
     if comment.author == request.user or request.user.role in ["Модератор", "Адміністратор"]:
@@ -305,60 +324,93 @@ def delete_comment(request, id):
         messages.error(request, "У вас немає прав на видалення цього коментаря")
     return redirect('view-question', id=comment.question.id)
 
-@login_required
+@login_required_message
 def delete_message(request, id):
     msg = get_object_or_404(UserMessage, id=id, user=request.user)
     msg.delete()
     messages.success(request, "Повідомлення успішно видалено")
     return redirect('history')
 
-@login_required
+@login_required_message
 def delete_event(request, id):
     msg = get_object_or_404(Event, id=id)
     msg.delete()
     messages.success(request, "Повідомлення успішно видалено")
     return redirect('calendar')
 
-@login_required
+def grade_delete(request, pk):
+    grade_instance = get_object_or_404(Grade, pk=pk)
+
+    role = get_user_role(request.user)
+    if role not in ["Модератор", "Адміністратор"]:
+        messages.error(request, "У вас немає доступу до цієї сторінки.")
+        return redirect('grade')
+
+    if request.method == "POST":
+        grade_instance.delete()
+        messages.success(request, f"Учень '{grade_instance.student_name}' видалений!")
+        return redirect('grade-add')
+
+    return redirect('grade')
+
+@login_required_message
+def delete_poll(request, id):
+    poll = get_object_or_404(Poll, id=id)
+    role = get_user_role(request.user)
+
+    if poll.owner != request.user and role not in ["Модератор", "Адміністратор"]:
+        messages.error(request, "У вас немає прав на видалення цього опитування.")
+        return redirect('view-all-poll')
+
+    poll.delete()
+    messages.success(request, "Опитування успішно видалено!")
+    return redirect('view-all-poll')
+
+@login_required_message
 def history(request):
     role = get_user_role(request.user)
-    
-    messages_list = request.user.messages.all().order_by('-created_at')
-    
+
+    messages_qs = request.user.messages.all().order_by('-created_at')
+
+    paginator = Paginator(messages_qs, 20)
+    page_number = request.GET.get('page')
+    messages_page = paginator.get_page(page_number)
+
     return render(request, 'history.html', {
         'role': role,
-        'messages_list': messages_list
+        'messages_list': messages_page,
     })
 
-@login_required
-def role(request):
-    role = get_user_role(request.user)
-    
-    
-    return render(request, 'history.html', {
-        'role': role,
-    })
-
+@login_required_message
 def grade(request):
     role = get_user_role(request.user)
-    
-    grades = Grade.objects.all().order_by('student_name')
+
+    grades_list = Grade.objects.all().order_by('student_name')
+    paginator = Paginator(grades_list, 20)
+
+    page_number = request.GET.get('page')
+    grades = paginator.get_page(page_number)
 
     return render(request, 'grade.html', {
         'grades': grades,
         'role': role,
     })
 
+@login_required_message
 def grade_add(request):
     role = get_user_role(request.user)
 
-    grades = Grade.objects.all().order_by('student_name')
+    grades_list = Grade.objects.all().order_by('student_name')
+    paginator = Paginator(grades_list, 10)
+
+    page_number = request.GET.get('page')
+    grades = paginator.get_page(page_number)
 
     if request.method == "POST" and 'add_student' in request.POST:
         new_student = Grade.objects.create(
             student_name="Новий учень",
-            student_class="Поки не в якому",
-            subject="Нема уроків поки",
+            student_class="-",
+            subject="-",
             grade=0
         )
         new_student.student_name = f"Новий учень {new_student.id}"
@@ -383,11 +435,11 @@ class GradeForm(forms.ModelForm):
             'grade': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
-
+@login_required_message
 def grade_edit(request, pk):
     grade_instance = get_object_or_404(Grade, pk=pk)
     role = get_user_role(request.user)
-    
+
     if not request.user.is_staff and request.user.username.lower() != "andrey":
         messages.error(request, "У вас немає доступу до цієї сторінки.")
         return redirect('grade')
@@ -407,21 +459,208 @@ def grade_edit(request, pk):
         'role': role
     })
 
-
-def grade_delete(request, pk):
-    grade_instance = get_object_or_404(Grade, pk=pk)
-
+@login_required_message
+def view_event(request, id):
     role = get_user_role(request.user)
-    if role not in ["Модератор", "Адміністратор"]:
-        messages.error(request, "У вас немає доступу до цієї сторінки.")
-        return redirect('grade')
+    event = get_object_or_404(Event, id=id)
+    comments = event.comments.all().order_by('-created_at')
 
     if request.method == "POST":
-        grade_instance.delete()
-        messages.success(request, f"Учень '{grade_instance.student_name}' видалений!")
-        return redirect('grade-add')
+        text = request.POST.get("comment")
+        photo = request.FILES.get("photo")
+        if text:
+            Comment.objects.create(
+                event=event,
+                author=request.user,
+                text=text,
+                photo=photo
+            )
+            messages.success(request, "Коментар додано!")
+            return redirect("view-event", id=id)
+        else:
+            messages.error(request, "Коментар не може бути порожнім!")
 
-    return redirect('grade')
+    return render(request, "view-event.html", {
+        "role": role,
+        "event": event,
+        "comments": comments
+    })
+
+@login_required_message
+def create_poll(request):
+    if not request.user.is_staff and request.user.username.lower() != "andrey":
+        messages.error(request, "У вас немає доступу до цієї сторінки.")
+        return redirect('home', id=request.user.id)
+    
+    role = get_user_role(request.user)
+    if request.method == "POST":
+        title = request.POST.get('title')
+        if not title:
+            messages.error(request, "Назва опитування обов'язкова!")
+            return redirect('create_poll')
+
+        poll = Poll.objects.create(owner=request.user, title=title)
+
+        for i in range(1, 6):
+            q_text = request.POST.get(f'quest{i}')
+            if not q_text:
+                continue
+            question = Question.objects.create(poll=poll, text=q_text)
+
+            for j in range(1, 4):
+                opt_text = request.POST.get(f'q{i}_opt{j}')
+                is_correct = request.POST.get(f'q{i}_correct') == str(j)
+                Option.objects.create(question=question, text=opt_text, is_correct=is_correct)
+
+        messages.success(request, "Опитування створено успішно!")
+        return redirect('home', id=request.user.id)
+
+    return render(request, 'create-poll.html', {
+        'role': role,
+        'role': "Модератор" if request.user.is_staff else "Адміністратор"
+    })
+
+@login_required_message
+def edit_poll(request, id):
+    poll = get_object_or_404(Poll, id=id)
+    role = get_user_role(request.user)
+
+    if poll.owner != request.user and role not in ["Модератор", "Адміністратор"]:
+        messages.error(request, "У вас немає доступу до редагування цього опитування.")
+        return redirect('home', id=request.user.id)
+
+    if request.method == "POST":
+        poll.title = request.POST.get('title')
+        poll.save()
+
+        for i, question in enumerate(poll.questions.all(), start=1):
+            q_text = request.POST.get(f'quest{i}')
+            if q_text:
+                question.text = q_text
+                question.save()
+
+            correct_opt = request.POST.get(f'q{i}_correct')
+            for j, option in enumerate(question.options.all(), start=1):
+                opt_text = request.POST.get(f'q{i}_opt{j}')
+                if opt_text:
+                    option.text = opt_text
+                    option.is_correct = (correct_opt == str(j))
+                    option.save()
+
+        messages.success(request, "Опитування оновлено успішно!")
+        return redirect('view-all-poll')
+
+    return render(request, 'edit-poll.html', {
+        'poll': poll,
+        'role': role,
+    })
+
+@login_required_message
+def results_poll(request, id):
+    poll = get_object_or_404(Poll, id=id)
+    role = get_user_role(request.user)
+
+    questions = poll.questions.all()
+    total_votes = 0
+    results = []
+
+    for question in questions:
+        for option in question.options.all():
+            total_votes += getattr(option, 'votes', 0)
+
+    for question in questions:
+        option_stats = []
+        for option in question.options.all():
+            votes = getattr(option, 'votes', 0)
+            percent = (votes / total_votes * 100) if total_votes > 0 else 0
+            option_stats.append({
+                'text': option.text,
+                'votes': votes,
+                'percent': round(percent, 2),
+                'is_correct': option.is_correct
+            })
+        results.append({
+            'question': question.text,
+            'options': option_stats
+        })
+
+    return render(request, 'results-poll.html', {
+        'poll': poll,
+        'role': role,
+        'results': results,
+        'total_votes': total_votes
+    })
+
+def view_all_poll(request):
+    role = get_user_role(request.user)
+    title_query = request.GET.get('title', '')
+    polls = Poll.objects.all()
+
+    if title_query:
+        polls = polls.filter(title__icontains=title_query)
+
+    polls = polls.order_by('-created_at')
+
+    paginator = Paginator(polls, 10)
+    page_number = request.GET.get('page')
+    polls_page = paginator.get_page(page_number)
+
+    return render(request, 'view-all-poll.html', {
+        'poll': polls_page,
+        'role': role,
+        'title_query': title_query,
+        'messages_list': polls_page,
+    })
+
+@login_required_message
+def view_poll(request, id):
+    poll = get_object_or_404(Poll, id=id)
+    role = get_user_role(request.user)
+
+    questions = list(poll.questions.all())
+    total_questions = len(questions)
+    current_index = int(request.GET.get('q', 1))
+
+    if not questions:
+        return render(request, 'view-poll.html', {
+            'poll': poll,
+            'role': role,
+            'no_questions': True
+        })
+
+    if current_index > total_questions:
+        return redirect('poll-submitted', id=poll.id)
+
+    current_question = questions[current_index - 1]
+
+    if request.method == "POST":
+        selected_option_id = request.POST.get("option")
+        if selected_option_id:
+            option = current_question.options.filter(id=selected_option_id).first()
+            if option:
+                option.votes += 1
+                option.save()
+
+            next_q = current_index + 1
+            return redirect(f"{request.path}?q={next_q}")
+
+    return render(request, 'view-poll.html', {
+        'poll': poll,
+        'role': role,
+        'question': current_question,
+        'current_index': current_index,
+        'total_questions': total_questions,
+    })
+
+@login_required_message
+def poll_submitted(request, id):
+    poll = get_object_or_404(Poll, id=id)
+    role = get_user_role(request.user)
+
+    return render(request, 'poll-submitted.html', {
+        'poll': poll,
+        'role': role,
+    })
 
 def register(request):
     if request.method == 'POST':
@@ -447,11 +686,6 @@ def register(request):
             phone_number=phone_number,
             email=email,
             password=make_password(password)
-        )
-
-        Student.objects.create(
-            user=user,
-            surname=surname
         )
 
         auth_login(request, user)
@@ -501,29 +735,6 @@ def login(request):
         return redirect('home', id=request.user.id)
     return render(request, 'login.html')
 
-def login_student(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None and hasattr(user, 'student'):
-            auth_login(request, user)
-            return redirect('home', args=[user.username])
-        messages.error(request, "Невірний логін або пароль")
-    return render(request, 'login-student.html')
-
-def login_teacher(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        surname = request.POST.get('surname')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None and hasattr(user, 'teacher'):
-            auth_login(request, user)
-            return redirect(reverse('home', args=[user.username]))
-        messages.error(request, "Невірний логін або пароль")
-    return render(request, 'login-teacher.html')
-
 def register_delete(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -552,3 +763,105 @@ def register_delete(request):
             messages.error(request, "Користувач з такими даними не знайдений")
 
     return render(request, 'register-delete.html')
+
+def all_projects(request):
+    role = get_user_role(request.user)
+    projects_list = Project.objects.all()
+    paginator = Paginator(projects_list, 10)
+    page_num = request.GET.get("page")
+    return render(request, "portfolio/all_projects.html", {
+        "projects": paginator.get_page(page_num),
+        "role": role
+    })
+
+@login_required_message
+def my_projects(request):
+    role = get_user_role(request.user)
+    projects = Project.objects.filter(author=request.user)
+    return render(request, "portfolio/my_projects.html", {
+        "projects": projects,
+        "role": role
+    })
+
+def detail_project(request, project_id):
+    role = get_user_role(request.user)
+    if Project.objects.filter(id=project_id).exists():
+        project = Project.objects.get(id=project_id)
+        dopfiles = DopFile.objects.filter(project=project_id)
+        return render(request, "portfolio/detail_project.html", {
+            "project": project,
+            "role": role,
+            "dopfiles": dopfiles
+        })
+    else:
+        return redirect("all_projects")
+
+@login_required_message
+def load_project(request):
+    role = get_user_role(request.user)
+    if request.method == "POST":
+        name = request.POST.get("name")
+        description = request.POST.get("description")
+        main_file = request.FILES.get("main_file")
+
+        Project.objects.create(
+            author=request.user,
+            name=name,
+            description=description,
+            main_file=main_file
+        )
+        return redirect("my_projects")
+
+    return render(request, "portfolio/load_project.html", {
+        "role": role
+    })
+@login_required_message
+def redact_project(request, project_id):
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        return redirect("my_projects")
+    
+    if request.method == "POST":
+        project.name = request.POST.get("name")
+        project.description = request.POST.get("description")
+        main_file = request.FILES.get("main_file")
+        if main_file:
+            project.main_file = main_file
+        project.save()
+        return redirect("my_projects")
+
+    return render(request, "portfolio/redact_project.html", {"project": project})
+
+@login_required_message
+def delete_project(request, project_id):
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        return redirect("my_projects")
+
+    if request.user == project.author:
+        project.delete()
+
+    return redirect("my_projects")
+
+@login_required_message
+def add_dopfile(request, project_id):
+    if Project.objects.filter(id=project_id).exists():
+        project = Project.objects.get(id=project_id)
+        file = request.FILES.get("file")
+        if file:
+            new_dopfile = DopFile.objects.create(
+                project=project,
+                file=file,
+                description=request.POST.get("description")
+            )
+    return redirect("my_projects")
+
+@login_required_message
+def delete_dopfile(request, dopfile_id):
+    if DopFile.objects.filter(id=dopfile_id).exists():
+        dopfile = DopFile.objects.get(id=dopfile_id)
+        if request.user == dopfile.project.author:
+            dopfile.delete()
+    return redirect("my_projects")

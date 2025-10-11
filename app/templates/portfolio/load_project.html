@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Завантаження проекту</title>
+{% endblock %}
+
+{% block body %}
+<h2>Завантаження вашого проекту</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>Введіть назву вашого проекта: <input type="text" name="name" maxlength="32" required></p>
+    <p>Опис проекта:</p>
+    <textarea style="resize: both; width: 500px; height: 300px;" name="description" required></textarea>
+    <p>Виберіть файл/архів вашого проекта: <input type="file" name="main_file" required></p>
+    <input type="submit" value="Завантажити проект">
+</form>
+{% endblock %}

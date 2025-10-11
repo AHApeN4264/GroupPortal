@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+
+{% block title %}
+<title>Проект "{{ project.name }}"</title>
+{% endblock %}
+
+{% block body %}
+<p>Автор проекту: {{ project.author.username }}</p>
+<p>Назва проекту: {{ project.name }}</p>
+<p>Опис проекту: {{ project.description }}</p>
+<a href="{{ project.main_file.url }}">Файл проекту</a>
+
+<hr>
+{% if dopfiles %}
+<h4>Додаткові файли(скріншоти, відео, тощо) до проекту:</h4>
+
+<ul>
+    {% for dopfile in dopfiles %}
+    <li>
+        {% if dopfile.file.url|endswith:".png" or dopfile.file.url|endswith:".jpg" %}
+        <img src="{{ dopfile.file.url }}" alt="Картинка до проекту">
+        {% elif dopfile.file.url|endswith:".mp4" %}
+        <video width="320" height="240" controls>
+            <source src="{{ dopfile.file.url }}" type="video/mp4">
+            На жаль, ваш браузер не підтримує відео
+        </video>
+        {% else %}
+        <a href="{{ dopfile.file.url }}">Завантажити додатковий файл</a>
+        {% endif %}
+        <p>Опис до файлу: {{ dopfile.description }}</p>
+        {% if dopfile.project.author == request.user %}
+        <a href="{% url 'delete_dopfile' dopfile.id %}"
+           style="color:red; font-weight:bold; display:inline-block; margin-top:5px; text-decoration: none;"
+           onclick="return confirm('Ви точно хочете видалити цей додатковий файл?')">
+           Видалити
+        </a>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>На жаль, автор цього проекту не додав додаткові файли.</p>
+{% endif %}
+
+<br>
+{% if request.user == project.author %}
+<form method="post" action="{% url 'add_dopfile' project.id %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>
+    Файл: <input type="file" name="file" required>
+    Опис: <input type="text" name="description">
+    <input type="submit" value="Додати додатковий файл">
+    </p>
+</form>
+{% endif %}
+
+{% endblock %}
