@@ -22,7 +22,6 @@ from django import forms
 
 User = get_user_model()
 
-
 def save_user_message(user, text, level="info"):
     if user.is_authenticated:
         UserMessage.objects.create(user=user, text=text, level=level)
